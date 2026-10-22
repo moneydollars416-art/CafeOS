@@ -1,3 +1,4 @@
+import React from "react";
 export default function CartItem({ item, index, onRemove }) {
   return <div className="cart-item" key={`${item.id}-${index}`}>
     <span>{item.name} — {item.price} сом</span>

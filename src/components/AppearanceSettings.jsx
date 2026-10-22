@@ -1,3 +1,4 @@
+import React from "react";
 import LanguageSelector from "./LanguageSelector";
 
 export default function AppearanceSettings({ language, setLanguage, dark, setDark }) {

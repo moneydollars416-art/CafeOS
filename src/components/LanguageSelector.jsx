@@ -1,3 +1,4 @@
+import React from "react";
 export default function LanguageSelector({ language, setLanguage }) {
   return <>
     <label htmlFor="languageSelect">Язык</label>

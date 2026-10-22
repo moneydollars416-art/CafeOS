@@ -1,3 +1,4 @@
+import React from "react";
 import AppearanceSettings from "../components/AppearanceSettings";
 import CafeNameForm from "../components/CafeNameForm";
 import PageTitle from "../components/PageTitle";

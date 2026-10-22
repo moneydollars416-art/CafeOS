@@ -1,3 +1,4 @@
+import React from "react";
 import UserAvatar from "./UserAvatar";
 
 export default function AppHeader({ title, user, onLogout }) {

@@ -1,3 +1,4 @@
+import React from "react";
 export default function ReservationForm({ localDate, onSubmit }) {
   return <div className="reservation-form"><form onSubmit={onSubmit}>
     <label htmlFor="reservationName">Имя гостя</label><input id="reservationName" name="name" placeholder="Например, Али" required />

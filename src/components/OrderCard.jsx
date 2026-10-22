@@ -1,3 +1,4 @@
+import React from "react";
 export default function OrderCard({ order, onStatus, onDelete }) {
   const statuses = ["Принят", "Готовится", "Готов", "Выдан", "Отменён"];
   return <article className="panel order-item">

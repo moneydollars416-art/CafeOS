@@ -1,3 +1,4 @@
+import React from "react";
 import PageTitle from "../components/PageTitle";
 import ProductGrid from "../components/ProductGrid";
 

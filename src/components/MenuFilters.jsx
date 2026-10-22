@@ -1,3 +1,4 @@
+import React from "react";
 export default function MenuFilters({ search, setSearch, category, setCategory, favoritesOnly, setFavoritesOnly }) {
   return <div className="panel menu-controls">
     <input aria-label="Поиск блюда" value={search} onChange={event => setSearch(event.target.value)} placeholder="Поиск блюда..." />

@@ -1,3 +1,4 @@
+import React from "react";
 import { foodImages } from "../data";
 
 export default function FoodCard({ item, favorite, onAdd, onFavorite, onDelete, onReview, canDelete = true }) {

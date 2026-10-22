@@ -1,3 +1,4 @@
+import React from "react";
 import CartItem from "./CartItem";
 import EmptyState from "./EmptyState";
 

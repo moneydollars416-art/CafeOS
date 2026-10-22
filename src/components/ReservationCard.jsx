@@ -1,3 +1,4 @@
+import React from "react";
 export default function ReservationCard({ item, onCancel }) {
   return <article className="reservation-card">
     <h4>🪑 Столик №{item.table}</h4>

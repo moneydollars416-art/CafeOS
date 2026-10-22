@@ -1,3 +1,4 @@
+import React from "react";
 import EmptyState from "../components/EmptyState";
 import RecentOrders from "../components/RecentOrders";
 import StatCard from "../components/StatCard";
