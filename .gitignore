@@ -1,0 +1,84 @@
+# === Секреты и конфигурация ===
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets.json
+
+# === Системные файлы ===
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# === Логи и кэш ===
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.eslintcache
+.cache/
+
+# === Базы данных ===
+*.db
+*.sqlite
+*.sqlite3
+
+# === Node.js / JavaScript ===
+node_modules/
+/dist
+/build
+/out
+.next/
+.nuxt/
+
+# === Python ===
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.mypy_cache/
+
+# === C / C++ ===
+*.o
+*.obj
+*.exe
+*.out
+*.app
+*.so
+*.dylib
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake-build-debug/
+cmake-build-release/
+
+# === Редакторы кода и IDE ===
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*.swo
