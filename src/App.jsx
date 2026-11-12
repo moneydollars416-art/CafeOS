@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Navigate, Outlet, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import { LanguageContext, translations } from "./i18n";
+import Toast from "./components/Toast";
+import ChatBot from "./components/ChatBot";
+import { Navigate, Outlet, Route, Routes, useLocation, useNavigate } from "react-router-dom"
 import {
   createOrder,
   createProduct,
@@ -23,8 +26,9 @@ import MenuPage from "./pages/MenuPage";
 import OrdersPage from "./pages/OrdersPage";
 import ReservationsPage from "./pages/ReservationsPage";
 import SettingsPage from "./pages/SettingsPage";
+import { isAdmin } from "./config";
 
-function ProtectedLayout({ user, language, cafeName, onLogout }) {
+function ProtectedLayout({ user, language, setLanguage, dark, setDark, cafeName, onLogout }) {
   const location = useLocation();
   const pageId = location.pathname.split("/")[1] || "dashboard";
   const page = navigation.find(([id]) => id === pageId);
@@ -32,8 +36,9 @@ function ProtectedLayout({ user, language, cafeName, onLogout }) {
   const title = page ? page[languageIndex] : cafeName;
 
   if (!user) return <Navigate to="/login" replace />;
-  return <div className="app-shell">
-    <Sidebar language={language} />
+  if (pageId === "admin" && !isAdmin(user)) return <Navigate to="/" replace />;
+  return <div className="app-shell" data-area={pageId === "admin" ? "admin" : "client"}>
+    <Sidebar language={language} user={user} setLanguage={setLanguage} dark={dark} setDark={setDark} />
     <main className="main">
       <AppHeader title={title} user={user} onLogout={onLogout} />
       <Outlet />
@@ -57,6 +62,11 @@ export default function App() {
   const [cafeName, setCafeName] = useState(() => localStorage.getItem("cafeName") || "CafeOS");
   const [dark, setDark] = useState(() => localStorage.getItem("darkTheme") === "true");
   const navigate = useNavigate();
+  const [toast, setToast] = useState(null);
+  const tr = key => translations[language]?.[key] ?? translations.ru[key] ?? key;
+  function notify(key, detail) {
+    setToast({ title: tr(key), detail });
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -87,6 +97,7 @@ export default function App() {
     localStorage.setItem("darkTheme", String(dark));
   }, [dark]);
   useEffect(() => { localStorage.setItem("revenue", String(revenue)); }, [revenue]);
+  useEffect(() => { localStorage.setItem("language", language); }, [language]);
   useEffect(() => { document.title = `${cafeName} — Управление кафе`; }, [cafeName]);
   useEffect(() => { localStorage.setItem("menu", JSON.stringify(menu)); }, [menu]);
   useEffect(() => { localStorage.setItem("orders", JSON.stringify(orders)); }, [orders]);
@@ -103,13 +114,23 @@ export default function App() {
   }
 
   function addToCart(item) {
-    setCart(current => [...current, { ...item }]);
-    window.alert(`${item.name} добавлен в корзину!`);
-  }
+  setCart(current => [...current, { ...item }]);
+}
+
+function removeOneFromCart(id) {
+  setCart(current => {
+    const index = current.findLastIndex(item => String(item.id) === String(id));
+    return index === -1 ? current : current.filter((_, i) => i !== index);
+  });
+}
 
   function toggleFavorite(id) {
-    setFavorites(current => current.includes(id) ? current.filter(item => item !== id) : [...current, id]);
-  }
+  setFavorites(current =>
+    current.some(item => String(item) === String(id))
+      ? current.filter(item => String(item) !== String(id))
+      : [...current, id]
+  );
+}
 
   async function deleteFood(item) {
     if (!window.confirm(`Удалить блюдо «${item.name}»?`)) return;
@@ -125,24 +146,24 @@ export default function App() {
     }
   }
 
-  async function updateReview(id, rating) {
-    const currentItem = menu.find(item => item.id === id);
-    if (!currentItem) return;
-    const nextItem = {
-      ...currentItem,
-      rating: Number((((currentItem.rating || 5) * (currentItem.reviews || 0) + rating) / ((currentItem.reviews || 0) + 1)).toFixed(1)),
-      reviews: (currentItem.reviews || 0) + 1
-    };
+ async function updateReview(id, rating) {
+  const currentItem = menu.find(item => String(item.id) === String(id));
+  if (!currentItem) return;
+  const reviews = Number(currentItem.reviews || 0);
+  const nextItem = {
+    ...currentItem,
+    rating: Number((((Number(currentItem.rating) || 5) * reviews + rating) / (reviews + 1)).toFixed(1)),
+    reviews: reviews + 1
+  };
 
-    try {
-      const savedItem = await updateProduct(id, nextItem);
-      setMenu(current => current.map(item => item.id === id ? savedItem : item));
-    } catch (error) {
-      console.error(error);
-      window.alert("Не удалось сохранить оценку.");
-    }
+  setMenu(current => current.map(item => String(item.id) === String(id) ? nextItem : item));
+
+  try {
+    await updateProduct(id, nextItem);
+  } catch (error) {
+    console.error(error);
   }
-
+}
   async function handleAddFood(item) {
     try {
       const savedItem = await createProduct(item);
@@ -156,13 +177,13 @@ export default function App() {
   async function checkout() {
     if (!cart.length) return window.alert("Сначала добавьте блюда в корзину!");
     const total = cart.reduce((sum, item) => sum + item.price, 0);
-    const order = { items: cart.map(item => ({ ...item })), total, date: new Date().toLocaleString("ru-RU"), status: "Принят" };
+    const order = { items: cart.map(item => ({ ...item })), total, date: new Date().toLocaleString("ru-RU"), status: "Принят", customer: user.name };
     try {
       const createdOrder = await createOrder(order);
       setOrders(current => [createdOrder, ...current]);
       setRevenue(current => current + total);
       setCart([]);
-      window.alert("Заказ успешно оформлен!");
+      notify("toast.ordered", tr("toast.ordersHint"));
       navigate("/orders");
     } catch (error) {
       console.error(error);
@@ -181,6 +202,17 @@ export default function App() {
       window.alert("Не удалось удалить заказ.");
     }
   }
+  async function changeOrderStatus(id, status) {
+  const currentOrder = orders.find(order => String(order.id) === String(id));
+  if (!currentOrder) return;
+  try {
+    const savedOrder = await updateOrder(id, { ...currentOrder, status });
+    setOrders(current => current.map(order => String(order.id) === String(id) ? savedOrder : order));
+  } catch (error) {
+    console.error(error);
+    window.alert("Не удалось обновить статус заказа.");
+  }
+}
 
   function exportOrders() {
     const rows = [["Номер", "Блюда", "Сумма", "Дата", "Статус"], ...orders.map(order => [order.id, order.items.map(item => item.name).join("; "), order.total, order.date, order.status])];
@@ -191,33 +223,27 @@ export default function App() {
     link.click();
     URL.revokeObjectURL(link.href);
   }
+  function addReservation(item) {
+    setReservations(current => [...current, item]);
+    notify("toast.booked", `${tr("res.tableN")}${item.table} · ${item.date.split("-").reverse().join(".")}, ${item.time}`);
+  }
 
-  return <Routes>
+  function cancelReservation(item) {
+    setReservations(current => current.map(reservation => reservation.id === item.id ? { ...reservation, status: "Отменено" } : reservation));
+  }
+
+  return <LanguageContext.Provider value={language}><Routes>
     <Route path="/login" element={user ? <Navigate to="/" replace /> : <AuthScreen onLogin={login} />} />
-    <Route element={<ProtectedLayout user={user} language={language} cafeName={cafeName} onLogout={logout} />}>
+    <Route element={<ProtectedLayout user={user} language={language} setLanguage={setLanguage} dark={dark} setDark={setDark} cafeName={cafeName} onLogout={logout} />}>
       <Route path="/" element={<DashboardPage revenue={revenue} orders={orders} menu={menu} />} />
-      <Route path="/menu" element={<MenuPage menu={menu} favorites={favorites} onAdd={addToCart} onFavorite={toggleFavorite} onDelete={deleteFood} onAddFood={handleAddFood} onReview={updateReview} />} />
-      <Route path="/orders" element={<OrdersPage orders={orders} onStatus={async (id, status) => {
-        const currentOrder = orders.find(order => order.id === id);
-        if (!currentOrder) return;
-        try {
-          const savedOrder = await updateOrder(id, { ...currentOrder, status });
-          setOrders(current => current.map(order => order.id === id ? savedOrder : order));
-        } catch (error) {
-          console.error(error);
-          window.alert("Не удалось обновить статус заказа.");
-        }
-      }} onDelete={deleteOrder} />} />
-      <Route path="/reservations" element={<ReservationsPage reservations={reservations} onAdd={item => setReservations(current => [...current, item])} onCancel={item => {
-        if (window.confirm("Точно отменить это бронирование?")) setReservations(current => current.map(reservation => reservation.id === item.id ? { ...reservation, status: "Отменено" } : reservation));
-      }} />} />
-      <Route path="/cashier" element={<CashierPage cart={cart} onRemove={index => setCart(current => current.filter((_, itemIndex) => itemIndex !== index))} onClear={() => {
-        if (!cart.length || window.confirm("Очистить корзину?")) setCart([]);
-      }} onCheckout={checkout} />} />
-      <Route path="/favorites" element={<FavoritesPage menu={menu} favorites={favorites} onAdd={addToCart} onFavorite={toggleFavorite} onReview={updateReview} />} />
-      <Route path="/admin" element={<AdminPage menu={menu} orders={orders} revenue={revenue} onExport={exportOrders} />} />
-      <Route path="/settings" element={<SettingsPage cafeName={cafeName} setCafeName={setCafeName} language={language} setLanguage={setLanguage} dark={dark} setDark={setDark} />} />
+      <Route path="/menu" element={<MenuPage menu={menu} favorites={favorites} cart={cart} canManage={isAdmin(user)} onAdd={addToCart} onRemoveOne={removeOneFromCart} onFavorite={toggleFavorite} onDelete={deleteFood} onAddFood={handleAddFood} onReview={updateReview} />} />
+      <Route path="/orders" element={<OrdersPage orders={orders} user={user} />} />
+      <Route path="/reservations" element={<ReservationsPage reservations={reservations} user={user} onAdd={addReservation} onCancel={cancelReservation} />} />
+      <Route path="/cashier" element={<CashierPage cart={cart} onAdd={addToCart} onRemoveOne={removeOneFromCart} onClear={() => { if (window.confirm("Очистить корзину?")) setCart([]); }} onCheckout={checkout} />} />
+      <Route path="/favorites" element={<FavoritesPage menu={menu} favorites={favorites} cart={cart} onAdd={addToCart} onRemoveOne={removeOneFromCart} onFavorite={toggleFavorite} onReview={updateReview} />} />
+      <Route path="/admin" element={<AdminPage menu={menu} orders={orders} revenue={revenue} reservations={reservations} onAddFood={handleAddFood} onDelete={deleteFood} onExport={exportOrders} onStatus={changeOrderStatus} onDeleteOrder={deleteOrder} onCancelReservation={item => setReservations(current => current.map(reservation => reservation.id === item.id ? { ...reservation, status: "Отменено" } : reservation))} />} />
+      <Route path="/settings" element={<SettingsPage user={user} onLogout={logout} cafeName={cafeName} setCafeName={setCafeName} />} />
     </Route>
     <Route path="*" element={<Navigate to={user ? "/" : "/login"} replace />} />
-  </Routes>;
+  </Routes>{user && <ChatBot menu={menu} />}<Toast toast={toast} onClose={() => setToast(null)} /></LanguageContext.Provider>;
 }

@@ -11,10 +11,10 @@ export const navigation = [
   ["menu", "🍔", "Меню", "Меню", "Menu"],
   ["orders", "📋", "Заказы", "Буйрутмалар", "Orders"],
   ["reservations", "🪑", "Бронирование", "Брондоо", "Reservations"],
-  ["cashier", "💰", "Касса", "Касса", "Cashier"],
+  ["cashier", "💰", "Касса", "Себет", "Cashier"],
   ["favorites", "❤️", "Избранное", "Тандалгандар", "Favorites"],
-  ["admin", "🛠️", "Админ-панель", "Админ-панель", "Admin panel"],
-  ["settings", "⚙️", "Настройки", "Жөндөөлөр", "Settings"]
+ ["admin", "🛡️", "Управление", "Башкаруу", "Manage"],
+  ["settings", "👤", "Мой профиль", "Менин профилим", "My profile"]
 ];
 
 export const foodImages = {

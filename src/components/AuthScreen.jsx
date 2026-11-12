@@ -1,5 +1,6 @@
 import React from "react";
 import { useState } from "react";
+import { Coffee } from "lucide-react";
 import { createUser, getUsers } from "../api";
 
 export default function AuthScreen({ onLogin }) {
@@ -52,7 +53,7 @@ export default function AuthScreen({ onLogin }) {
 
   return <section className="auth-screen">
     <div className="auth-card">
-      <h1>☕ CafeOS</h1>
+      <h1 className="auth-brand"><Coffee size={28} /> CafeOS</h1>
       <p>Система управления кафе</p>
       <div className="auth-tabs">
         <button type="button" className={mode === "login" ? "primary" : ""} onClick={() => { setMode("login"); setMessage(""); }}>Вход</button>

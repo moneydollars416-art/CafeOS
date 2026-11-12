@@ -77,3 +77,9 @@ export async function deleteOrderApi(id) {
     method: "DELETE"
   });
 }
+export async function updateUser(id, user) {
+  return requestJSON(`${USERS_URL}/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(user)
+  });
+}
